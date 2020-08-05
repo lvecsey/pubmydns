@@ -22,7 +22,7 @@ The zero represents the index number to save into. So for example if you are the
 The server itself can be started with tcpserver (this can be a run file):
 
 ```console    
-    export PUBMYDNS_MMAPFN='/tmp/pubmydns.mmap'
+export PUBMYDNS_MMAPFN='/tmp/pubmydns.mmap'
 tcpserver -vRHl0 0.0.0.0 5930 ~/bin/pubmydns
 ```
 
@@ -53,10 +53,15 @@ Just run
 
 It will give output such as the following:
 
+```
 0->ip.ad.re.ss
 1->ip.ad.re.ss
 ...
+```
 
 for each client that has contributed an ip address.
 
+*Other ideas*
+
+Use rsync+ssh to replicate the mmap file to other servers, including a backup server. Probably, your servers already have ssh running on them so you can always rsync+ssh the .mmap file to a local machine to run pubmydns show on them or remotely log into them to view the current state of the mmap file.
 
