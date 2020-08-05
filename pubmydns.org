@@ -1,0 +1,4 @@
+* DONE bring in readfile and writefile code
+* DONE put together tcpserver run script
+* DONE document the crontab entry needed on client machines
+* TODO utilize the critbit code a bit more that we pulled in
