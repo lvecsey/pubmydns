@@ -25,6 +25,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <inttypes.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -96,7 +98,7 @@ int pubmydns_show(char *mmap_fn) {
       decoded_indexno = be64toh(decoded_indexno);
       decoded_extra = be64toh(decoded_extra);
       
-      printf("%lu->%u.%u.%u.%u\n", decoded_indexno, rp->ipv6[0], rp->ipv6[1], rp->ipv6[2], rp->ipv6[3]); 
+      printf("%"PRIu64"->%u.%u.%u.%u\n", decoded_indexno, rp->ipv6[0], rp->ipv6[1], rp->ipv6[2], rp->ipv6[3]); 
 
     }
       
@@ -208,7 +210,7 @@ int main(int argc, char *argv[]) {
 	
 	bytes_read = readfile(in_fd, buf, 8);
 	if (bytes_read != 8) {
-	  fprintf(stderr, "%s: bytes_read %d\n", __FUNCTION__, bytes_read);
+	  fprintf(stderr, "%s: bytes_read %ld\n", __FUNCTION__, bytes_read);
 	  perror("read command");
 	  return -1;
 	}
@@ -245,7 +247,7 @@ int main(int argc, char *argv[]) {
 	    unsigned char *client_ip;
 	    char critbuf[40];
 	    client_ip = buf;
-	    retval = sprintf(critbuf, "%lu->%u.%u.%u.%u", indexno, client_ip[0], client_ip[1], client_ip[2], client_ip[3]);
+	    retval = sprintf(critbuf, "%"PRIu64"->%u.%u.%u.%u", indexno, client_ip[0], client_ip[1], client_ip[2], client_ip[3]);
 	    retval = critbit0_insert(&dynamic_mapping, critbuf);
 	  }
 
@@ -257,6 +259,8 @@ int main(int argc, char *argv[]) {
 
 	    uint64_t encoded_indexno;
 	    uint64_t encoded_extra;
+
+	    fprintf(stderr, "%s: Advancing into mmap with unique indexno=%"PRIu64"\n", __FUNCTION__, indexno);
 	    
 	    rp = (pubmydns_rec*) m;
 
@@ -266,7 +270,7 @@ int main(int argc, char *argv[]) {
 	    encoded_extra = htobe64(0);
 	    
 	    memcpy(&(rp->indexno), &encoded_indexno, sizeof(uint64_t));
-	    memset(&(rp->extra), &encoded_extra, sizeof(rp->extra));
+	    memset(&(rp->extra), 0, sizeof(uint64_t));
 
 	    client_ip = buf;
 	    
@@ -275,7 +279,7 @@ int main(int argc, char *argv[]) {
 	    rp->ipv6[2] = client_ip[2];
 	    rp->ipv6[3] = client_ip[3];	    
 
-	    fprintf(stderr, "%s: Updated ip address %u.%u.%u.%u into mmap file using unique indexno=%lu.\n", __FUNCTION__, client_ip[0], client_ip[1], client_ip[2], client_ip[3], indexno);
+	    fprintf(stderr, "%s: Updated ip address %u.%u.%u.%u into mmap file using unique indexno=%"PRIu64"\n", __FUNCTION__, client_ip[0], client_ip[1], client_ip[2], client_ip[3], indexno);
 
 	    bytes_written = writefile(out_fd, "WROTEIP1", 8);
 	    if (bytes_written != 8) {
@@ -366,6 +370,8 @@ int main(int argc, char *argv[]) {
 
 	indexno = argc>2 ? strtol(argv[2], NULL, 10) : 0;
 
+	fprintf(stderr, "%s: Sending unique indexno=%"PRIu64"\n", __FUNCTION__, indexno);
+	
 	val = htobe64(indexno);
 
 	bytes_written = writefile(out_fd, &val, sizeof(uint64_t));
@@ -378,7 +384,7 @@ int main(int argc, char *argv[]) {
 
       bytes_read = readfile(in_fd, buf, 8);
       if (bytes_read != 8) {
-	fprintf(stderr, "%s: bytes_read %d\n", __FUNCTION__, bytes_read);
+	fprintf(stderr, "%s: bytes_read %ld\n", __FUNCTION__, bytes_read);
 	perror("read ack");
 	return -1;
       }
