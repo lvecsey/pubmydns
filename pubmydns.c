@@ -38,7 +38,7 @@
 #include "readfile.h"
 #include "writefile.h"
 
-typedef struct {
+typedef struct __attribute__ ((packed)) {
 
   uint64_t indexno;
 
@@ -85,8 +85,21 @@ int pubmydns_show(char *mmap_fn) {
       
     }
 
-    printf("%lu->%u.%u.%u.%u\n", be64toh(rp->indexno), rp->ipv6[0], rp->ipv6[1], rp->ipv6[2], rp->ipv6[3]); 
-    
+    {
+
+      uint64_t decoded_indexno;
+      uint64_t decoded_extra;
+
+      memcpy(&decoded_indexno, &(rp->indexno), sizeof(uint64_t));
+      memcpy(&decoded_extra, &(rp->extra), sizeof(uint64_t));      
+
+      decoded_indexno = be64toh(decoded_indexno);
+      decoded_extra = be64toh(decoded_extra);
+      
+      printf("%lu->%u.%u.%u.%u\n", decoded_indexno, rp->ipv6[0], rp->ipv6[1], rp->ipv6[2], rp->ipv6[3]); 
+
+    }
+      
   }
 
   munmap(m, buf.st_size);
@@ -241,13 +254,19 @@ int main(int argc, char *argv[]) {
 	    pubmydns_rec *rp;
 
 	    unsigned char *client_ip;\
+
+	    uint64_t encoded_indexno;
+	    uint64_t encoded_extra;
 	    
 	    rp = (pubmydns_rec*) m;
 
 	    rp += indexno;
 
-	    rp->indexno = indexno;
-	    rp->extra = 0;
+	    encoded_indexno = htobe64(indexno);
+	    encoded_extra = htobe64(0);
+	    
+	    memcpy(&(rp->indexno), &encoded_indexno, sizeof(uint64_t));
+	    memset(&(rp->extra), &encoded_extra, sizeof(rp->extra));
 
 	    client_ip = buf;
 	    
@@ -256,7 +275,7 @@ int main(int argc, char *argv[]) {
 	    rp->ipv6[2] = client_ip[2];
 	    rp->ipv6[3] = client_ip[3];	    
 
-	    fprintf(stderr, "%s: Updated ip address %u.%u.%u.%u into mmap file.\n", __FUNCTION__, client_ip[0], client_ip[1], client_ip[2], client_ip[3]);
+	    fprintf(stderr, "%s: Updated ip address %u.%u.%u.%u into mmap file using unique indexno=%lu.\n", __FUNCTION__, client_ip[0], client_ip[1], client_ip[2], client_ip[3], indexno);
 
 	    bytes_written = writefile(out_fd, "WROTEIP1", 8);
 	    if (bytes_written != 8) {

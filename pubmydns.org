@@ -2,3 +2,4 @@
 * DONE put together tcpserver run script
 * DONE document the crontab entry needed on client machines
 * TODO utilize the critbit code a bit more that we pulled in
+* DONE see about running on other architectures, check byte order and endian again
